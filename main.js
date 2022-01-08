@@ -2,18 +2,18 @@ import "./style.css";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js";
 import { VertexNormalsHelper } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/helpers/VertexNormalsHelper.js";
+import perlin from "https://cdn.jsdelivr.net/gh/mikechambers/es6-perlin-module@master/perlin.js";
 
+//Simplex noise
+import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js";
 const scene = new THREE.Scene();
-
-console.log(scene);
-console.log(OrbitControls);
-
+let lightPosition;
 // Load
-const fileLoader = new THREE.FileLoader();
-let shaders = 2;
-let planeVertexShader, planeFragmentShader;
+let shaders = 4;
+let planeVertexShader, planeFragmentShader, sunVertShader, sunFragShader;
 loadFiles();
 function loadFiles() {
+  const fileLoader = new THREE.FileLoader();
   fileLoader.load("./shaders/planeVert.glsl", (data) => {
     planeVertexShader = data;
     loaded();
@@ -24,7 +24,15 @@ function loadFiles() {
     loaded();
   });
 
-  return { planeVertexShader, planeFragmentShader };
+  fileLoader.load("./shaders/sunVert.glsl", (d) => {
+    sunVertShader = d;
+    loaded();
+  });
+
+  fileLoader.load("./shaders/sunFrag.glsl", (d) => {
+    sunFragShader = d;
+    loaded();
+  });
 }
 
 function loaded() {
@@ -35,56 +43,135 @@ function loaded() {
 }
 
 function init() {
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    innerWidth / innerHeight,
-    0.1,
-    1000
-  );
-
+  const camera = setupCamera();
   const renderer = new THREE.WebGLRenderer();
 
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(devicePixelRatio);
   document.body.appendChild(renderer.domElement);
 
-  // ORBIT
+  //ORBIT;
   const controls = new OrbitControls(camera, renderer.domElement);
   console.log(controls);
   controls.addEventListener("change", () => {
     renderer.render(scene, camera);
   });
+
   controls.update();
 
   // LIGHT
   // const ambientLight = new THREE.AmbientLight("#fff", 1.0);
   // scene.add(ambientLight);
-  const lightPosition = new THREE.Vector3(2.5, 6.5, 1.0);
-  var light = new THREE.PointLight("#fff", 1, 100);
+  // const hemLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+  // scene.add(hemLight);
+  setupLight();
+
+  // Make Terrain
+  makeTerrain(camera);
+
+  createBox(camera);
+  // createGroundPlane();
+  // createSun();
+  createSky();
+  // AXES helpers
+  const axesHelper = new THREE.AxesHelper(5);
+  scene.add(axesHelper);
+
+  renderer.render(scene, camera);
+  // animate(scene, camera, controls, renderer);
+}
+
+function setupCamera() {
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    innerWidth / innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.z = 1;
+  camera.position.y = 8;
+  camera.position.x = 8;
+  camera.lookAt(0, 0, 0);
+  // camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 8);
+  console.log(camera);
+
+  return camera;
+}
+
+function setupLight() {
+  // lightPosition = new THREE.Vector3(80.0, 20.0, -20.0);
+  lightPosition = new THREE.Vector3(2.0, 5.0, 5.0);
+
+  let light = new THREE.PointLight("#fff", 1, 500);
   light.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
   // light.castShadow = true;
   scene.add(light);
   console.log(light);
   const lightHelper = new THREE.PointLightHelper(light);
   scene.add(lightHelper);
-  // const hemLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
-  // scene.add(hemLight);
-  const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-  const planeGeometry = new THREE.PlaneBufferGeometry(30, 30, 25, 25);
+}
 
-  // Make Terrain
-  makeTerrain(planeGeometry);
+function createGroundPlane() {
+  // Add groundZero plane
+  const groundPlane = new THREE.PlaneBufferGeometry(100, 100, 25, 25);
 
-  const boxMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+  const groundMaterial = new THREE.MeshPhongMaterial({
+    color: 0x347deb,
+    opacity: 0.85,
+    transparent: true,
+  });
+  const groundMesh = new THREE.Mesh(groundPlane, groundMaterial);
+  scene.add(groundMesh);
+  groundMesh.rotation.x = -Math.PI / 2;
+  // groundMesh.translate(0, 0, 0);
+}
+
+function makeTerrain(camera) {
+  const planeGeometry = new THREE.PlaneBufferGeometry(100, 100, 55, 55).rotateX(
+    -Math.PI / 2
+  );
+
+  // Generate terrain
+  const planePos = planeGeometry.attributes.position;
+  const count = planePos.count;
+  console.log(planeGeometry);
+
+  const simplex = new SimplexNoise();
+  console.log(simplex);
+
+  for (let i = 0; i < count; i++) {
+    const x = planePos.getX(i);
+    const y = planePos.getY(i);
+    const z = planePos.getZ(i);
+    const texCord = new THREE.Vector2(x, z);
+
+    // planePos.setZ(i, z + 4.0 * random(texCord) + perlin(texCord.x, texCord.y));
+    planePos.setY(
+      i,
+      y + 5.0 * Math.sin(fbm(texCord)) * simplex.noise3D(x, y, z)
+    );
+  }
+
+  // calculate new normals
+  planeGeometry.computeVertexNormals();
+
   const material = new THREE.ShaderMaterial({
     // wireframe: true,
-
     uniforms: {
       time: { value: 1.0 },
-      Ka: { value: new THREE.Vector3(0.9, 0.5, 0.3) },
-      Kd: { value: new THREE.Vector3(0.9, 0.5, 0.3) },
-      Ks: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
-      LightIntensity: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) },
+      test: { value: 1.0 },
+      Ka: {
+        value: new THREE.Vector3(1, 1, 1),
+      },
+      Kd: {
+        value: new THREE.Vector3(1.0, 1.0, 1.0),
+      },
+      Ks: {
+        value: new THREE.Vector3(0.8, 0.8, 0.8),
+      },
+      LightIntensity: {
+        value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0),
+      },
       LightPosition: {
         value: new THREE.Vector4(
           lightPosition.x,
@@ -93,50 +180,45 @@ function init() {
           1.0
         ),
       },
-      Shininess: { value: 200.0 },
+      view: camera.view,
+      Shininess: { value: 30.0 },
     },
     vertexShader: planeVertexShader,
     fragmentShader: planeFragmentShader,
-    side: THREE.DoubleSide,
   });
-  // planeGeometry.computeVertexNormals();
-  const planeMesh = new THREE.Mesh(planeGeometry, material);
-  const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
+  const groundMaterial = new THREE.MeshPhongMaterial({
+    color: 0x347deb,
+  });
 
-  // AXES helpers
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
+  const planeMesh = new THREE.Mesh(planeGeometry, groundMaterial);
 
-  scene.add(mesh);
-  scene.add(planeMesh);
-
-  mesh.position.y = 5;
-
-  camera.position.z = 30;
-  camera.position.y = 10;
-  camera.rotation.x = -Math.PI / 8;
-  planeMesh.rotation.x = -Math.PI / 2;
-  // plane.translate(0, 0, -2);
-  planeGeometry.computeVertexNormals();
-  const vertexHelper = new VertexNormalsHelper(planeMesh, 2, 0x00ff00, 1);
+  // planeMesh.rotation.x = -Math.PI / 2;
+  // const vertexHelper = new VertexNormalsHelper(planeMesh, 2, 0x00ff00, 1);
   // scene.add(vertexHelper);
-  // vertexHelper.update();
 
-  renderer.render(scene, camera);
-  // animate(scene, camera, controls, renderer);
+  scene.add(planeMesh);
+  // planeMesh.material = material;
 }
 
-function makeTerrain(planeGeometry) {
-  const planePos = planeGeometry.attributes.position;
-  const count = planePos.count;
-  console.log(planeGeometry);
-  for (let i = 0; i < count; i++) {
-    const x = planePos.getX(i);
-    const y = planePos.getY(i);
-    const z = planePos.getZ(i);
-    const texCord = new THREE.Vector2(x, y);
-    planePos.setZ(i, z + 2.0 * random(texCord) + Math.sin(fbm(texCord)));
-  }
+function createSun() {
+  const sphereGeometry = new THREE.SphereGeometry(2, 32, 16);
+  const sphereMaterial = new THREE.ShaderMaterial({
+    vertexShader: sunVertShader,
+    fragmentShader: sunFragShader,
+  });
+
+  const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  scene.add(sphereMesh);
+  sphereMesh.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+}
+
+function createSky() {
+  const sky = new THREE.Mesh(
+    new THREE.SphereBufferGeometry(120, 120, 50),
+    new THREE.MeshBasicMaterial({ color: 0x87ceeb, side: THREE.BackSide })
+  );
+  scene.fog = new THREE.FogExp2(0xffffff, 0.0007);
+  // scene.add(sky);
 }
 
 function mix(a, b, t) {
@@ -169,12 +251,57 @@ function noise(s, t) {
 function fbm(st) {
   let value = 0.0;
   let amplitude = 0.5;
-  let frequency = 0.0;
+  let frequency = 1.0;
 
   for (let i = 0; i < 8; i++) {
-    value += amplitude * noise(st.x, st.y);
+    value += amplitude * frequency * noise(st.x, st.y);
     st = new THREE.Vector2(st.x * 2.0, st.y * 2.0);
     amplitude *= 0.5;
+    frequency *= 4.0;
   }
   return value;
+}
+
+function createBox(camera) {
+  const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const boxMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+
+  const material = new THREE.ShaderMaterial({
+    // wireframe: true,
+    uniforms: {
+      time: { value: 1.0 },
+      test: { value: 1.0 },
+      Ka: {
+        value: new THREE.Vector3(1, 1, 1),
+      },
+      Kd: {
+        value: new THREE.Vector3(1.0, 1.0, 1.0),
+      },
+      Ks: {
+        value: new THREE.Vector3(0.8, 0.8, 0.8),
+      },
+      LightIntensity: {
+        value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0),
+      },
+      LightPosition: {
+        value: new THREE.Vector4(
+          lightPosition.x,
+          lightPosition.y,
+          lightPosition.z,
+          1.0
+        ),
+      },
+      view: camera.view,
+      Shininess: { value: 30.0 },
+    },
+    vertexShader: planeVertexShader,
+    fragmentShader: planeFragmentShader,
+  });
+  const mesh = new THREE.Mesh(boxGeometry, material);
+  scene.add(mesh);
+  const vertexHelper = new VertexNormalsHelper(mesh, 2, 0x00ff00, 1);
+
+  // scene.add(vertexHelper);
+
+  mesh.position.y = 5;
 }
