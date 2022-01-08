@@ -56,17 +56,17 @@ void main() {
 
 	float threshold = -.5;
 	float lowerBound = -1.5;
-	if(vP.z < threshold ) {
-		float weight = (vP.z - lowerBound) / (threshold - lowerBound);
+	if(vP.y < threshold ) {
+		float weight = (vP.y - lowerBound) / (threshold - lowerBound);
 
-		outColor = lerp(lowerBound, threshold, vP.z, lightBlue, darkBlue);
+		outColor = lerp(lowerBound, threshold, vP.y, lightBlue, darkBlue);
 	}
-	else if(vP.z > threshold && vP.z < 0.0) {
-		outColor = lerp(lowerBound, 0.0, vP.z, brown, lighterBrown );
+	else if(vP.y > threshold && vP.y < 0.0) {
+		outColor = lerp(lowerBound, 0.0, vP.y, brown, lighterBrown );
 	}
-	else if(vP.z > 1.5) {
+	else if(vP.y > 1.5) {
 		vec3 white = vec3(1., 1., 1.);
-		outColor = lerp(1.4, 1.7, vP.z, white, brown);
+		outColor = lerp(1.4, 1.7, vP.y, white, brown);
 	} else {
 		outColor = brown;
 	}
@@ -81,7 +81,7 @@ void main() {
 	vec3 L = normalize(lightPos - vP);
 	float lambertian = max(dot(N,L), 0.0);
 	float specular = 0.0;
-
+	
 		vec3 R = reflect(-L, N); // reflected light vector
 		vec3 V = normalize(-vP);
 		// Compute the specular term

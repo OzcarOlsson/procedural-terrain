@@ -69,7 +69,7 @@ function init() {
   // Make Terrain
   makeTerrain(camera);
 
-  createBox();
+  createBox(camera);
   // createGroundPlane();
   // createSun();
   createSky();
@@ -127,7 +127,9 @@ function createGroundPlane() {
 }
 
 function makeTerrain(camera) {
-  const planeGeometry = new THREE.PlaneBufferGeometry(100, 100, 55, 55);
+  const planeGeometry = new THREE.PlaneBufferGeometry(100, 100, 55, 55).rotateX(
+    -Math.PI / 2
+  );
 
   // Generate terrain
   const planePos = planeGeometry.attributes.position;
@@ -141,32 +143,23 @@ function makeTerrain(camera) {
     const x = planePos.getX(i);
     const y = planePos.getY(i);
     const z = planePos.getZ(i);
-    const texCord = new THREE.Vector2(x, y);
+    const texCord = new THREE.Vector2(x, z);
 
     // planePos.setZ(i, z + 4.0 * random(texCord) + perlin(texCord.x, texCord.y));
-    planePos.setZ(
+    planePos.setY(
       i,
-      z + 5.0 * Math.sin(fbm(texCord)) * simplex.noise3D(x, y, z)
+      y + 5.0 * Math.sin(fbm(texCord)) * simplex.noise3D(x, y, z)
     );
   }
 
   // calculate new normals
-
-  const groundMaterial = new THREE.MeshPhongMaterial({
-    color: 0x347deb,
-  });
-
-  const planeMesh = new THREE.Mesh(planeGeometry, groundMaterial);
-
-  planeMesh.rotation.x = -Math.PI / 2;
   planeGeometry.computeVertexNormals();
-  // const vertexHelper = new VertexNormalsHelper(planeMesh, 2, 0x00ff00, 1);
-  // scene.add(vertexHelper);
+
   const material = new THREE.ShaderMaterial({
     // wireframe: true,
     uniforms: {
       time: { value: 1.0 },
-      test: { value: 0.0 },
+      test: { value: 1.0 },
       Ka: {
         value: new THREE.Vector3(1, 1, 1),
       },
@@ -193,10 +186,18 @@ function makeTerrain(camera) {
     vertexShader: planeVertexShader,
     fragmentShader: planeFragmentShader,
   });
-  planeGeometry.computeVertexNormals();
+  const groundMaterial = new THREE.MeshPhongMaterial({
+    color: 0x347deb,
+  });
+
+  const planeMesh = new THREE.Mesh(planeGeometry, groundMaterial);
+
+  // planeMesh.rotation.x = -Math.PI / 2;
+  // const vertexHelper = new VertexNormalsHelper(planeMesh, 2, 0x00ff00, 1);
+  // scene.add(vertexHelper);
 
   scene.add(planeMesh);
-  planeMesh.material = material;
+  // planeMesh.material = material;
 }
 
 function createSun() {
@@ -261,48 +262,42 @@ function fbm(st) {
   return value;
 }
 
-function createBox() {
+function createBox(camera) {
   const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
   const boxMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
 
-  // const material = new THREE.ShaderMaterial({
-  //   // wireframe: true,
-
-  //   uniforms: {
-  //     time: { value: 1.0 },
-  //     test: { value: 1.0 },
-  //     Ka: {
-  //       value: new THREE.Vector3(0.5, 0.5, 0.5),
-  //     },
-  //     Kd: {
-  //       value: new THREE.Vector3(0.5, 0.5, 0.5),
-  //     },
-  //     Ks: {
-  //       value: new THREE.Vector3(0.8, 0.8, 0.8),
-  //     },
-  //     LightIntensity: {
-  //       value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0),
-  //     },
-  //     // LightPosition: {
-  //     //   value: new THREE.Vector4(0.0, 5.0, 0.0, 1.0),
-  //     // },
-  //     LightPosition: {
-  //       value: new THREE.Vector4(
-  //         lightPosition.x,
-  //         lightPosition.y,
-  //         lightPosition.z,
-  //         1.0
-  //       ),
-  //     },
-  //     Shininess: { value: 30.0 },
-  //   },
-  //   vertexShader: planeVertexShader,
-  //   fragmentShader: planeFragmentShader,
-
-  //   // side: THREE.DoubleSide,
-  // });
-
-  const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
+  const material = new THREE.ShaderMaterial({
+    // wireframe: true,
+    uniforms: {
+      time: { value: 1.0 },
+      test: { value: 1.0 },
+      Ka: {
+        value: new THREE.Vector3(1, 1, 1),
+      },
+      Kd: {
+        value: new THREE.Vector3(1.0, 1.0, 1.0),
+      },
+      Ks: {
+        value: new THREE.Vector3(0.8, 0.8, 0.8),
+      },
+      LightIntensity: {
+        value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0),
+      },
+      LightPosition: {
+        value: new THREE.Vector4(
+          lightPosition.x,
+          lightPosition.y,
+          lightPosition.z,
+          1.0
+        ),
+      },
+      view: camera.view,
+      Shininess: { value: 30.0 },
+    },
+    vertexShader: planeVertexShader,
+    fragmentShader: planeFragmentShader,
+  });
+  const mesh = new THREE.Mesh(boxGeometry, material);
   scene.add(mesh);
   const vertexHelper = new VertexNormalsHelper(mesh, 2, 0x00ff00, 1);
 
