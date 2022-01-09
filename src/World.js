@@ -1,13 +1,27 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js"; // REF?
-
+import { Helpers } from "./Helpers.js";
+import { Water } from "./Water.js";
+import { loadTexture } from "./loaders.js";
 export class World {
   constructor(scene, terrainSize, resolution, initialParams) {
     this.scene = scene;
     this.terrainSize = terrainSize;
     this.resolution = resolution;
+
+    this.snowTex = loadTexture("../textures/snow2.jpg");
+    this.rockTex = loadTexture("../textures/rockTex.jpg");
+    this.dirtTex = loadTexture("../textures/mountWater.jpg");
     this.planeMesh = this.createPlane(initialParams.plane);
-    this.setupLight();
+    this.lightPosition = initialParams.sun.position;
+    this.light = this.setupLight();
+    new Helpers(this.scene, this.light);
+    this.createSky();
+
+    this.angle = 0;
+    this.quat = new THREE.Quaternion();
+
+    this.sun = this.createSun();
     // this.createPlane();
   }
 
@@ -35,7 +49,7 @@ export class World {
     planeGeometry.computeVertexNormals();
     const material = new THREE.MeshStandardMaterial({
       color: "gray",
-      // map: snowTex,
+      map: this.rockTex,
       // displacementMap: height,
       // wireframe: true,
     });
@@ -56,7 +70,22 @@ export class World {
       // calc distance to center
       let dist = xz.distanceTo(origo);
 
-      array[i + 1] = this.generateNoise(x, z, planeParams, i);
+      // if (dist >= 8.5) {
+      //   array[i + 1] = this.generateNoise(x, z, planeParams, i);
+      // } else {
+      //   array[i + 1] = -5.0;
+      // }
+      const n = Math.random();
+      if (x <= 2.0 && x >= -2.0) {
+        // array[i + 1] = -this.generateNoise(x, z, planeParams, i);
+        if (z <= 2.0 && z >= -2.0) {
+          array[i + 1] = 2.0;
+        } else {
+          array[i + 1] = -2.0;
+        }
+      } else {
+        array[i + 1] = 2.0 + this.generateNoise(x, z, planeParams, i);
+      }
     }
   }
 
@@ -94,14 +123,61 @@ export class World {
   }
 
   setupLight() {
-    let lightPosition = new THREE.Vector3(2.0, 5.0, 5.0);
+    // let lightPosition = new THREE.Vector3(2.0, 5.0, 5.0);
+    //this.lightPosition = new THREE.Vector3(20.0, 30.0, -20.0);
 
-    let light = new THREE.PointLight("#fff", 1, 500);
-    light.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+    let light = new THREE.DirectionalLight("#fff", 1, 500);
+    light.position.set(
+      this.lightPosition.x,
+      this.lightPosition.y,
+      this.lightPosition.z
+    );
+
     // light.castShadow = true;
+    // const ambientLight = new THREE.AmbientLight("#fff", 1.0);
+    // this.scene.add(ambientLight);
     this.scene.add(light);
 
-    const lightHelper = new THREE.PointLightHelper(light);
-    this.scene.add(lightHelper);
+    return light;
+  }
+
+  createSky() {
+    const sky = new THREE.Mesh(
+      new THREE.SphereBufferGeometry(120, 120, 50),
+      new THREE.MeshBasicMaterial({ color: 0x87ceeb, side: THREE.BackSide })
+    );
+    this.scene.fog = new THREE.FogExp2(0xffffff, 0.0007);
+    this.scene.add(sky);
+  }
+
+  createSun() {
+    const sphereGeometry = new THREE.SphereGeometry(2, 32, 16);
+    // const sphereMaterial = new THREE.ShaderMaterial({
+    //   vertexShader: sunVertShader,
+    //   fragmentShader: sunFragShader,
+    // });
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xf9d71c });
+
+    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    this.scene.add(sphereMesh);
+    sphereMesh.position.set(
+      this.lightPosition.x,
+      this.lightPosition.y,
+      this.lightPosition.z
+    );
+    return sphereMesh;
+  }
+  updateSunPosition(lightPos) {
+    const axis = new THREE.Vector3(1, 0, 0).normalize();
+    const l = new THREE.Vector3(lightPos.x, lightPos.y, lightPos.z);
+
+    this.angle += 0.01;
+    this.quat.setFromAxisAngle(axis, this.angle);
+    l.applyQuaternion(this.quat);
+
+    this.sun.position.set(l.x, l.y, l.z);
+    this.light.position.set(l.x, l.y, l.z);
+
+    // this.light.position.set(lightPos.x, lightPos.y, lightPos.z);
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js";
 
+import { Water } from "./Water.js";
 import { GUI } from "./GUI.js";
 import { World } from "./World.js";
 export class Render {
@@ -8,7 +9,14 @@ export class Render {
     this.scene = new THREE.Scene();
     this.camera = this.setupCamera();
 
-    this.world = new World(this.scene, 50, 25, initialParams);
+    this.terrainSize = 100;
+    this.resolution = 50;
+    this.world = new World(
+      this.scene,
+      this.terrainSize,
+      this.resolution,
+      initialParams
+    );
     new GUI(initialParams, this.world);
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(innerWidth, innerHeight);
@@ -20,7 +28,9 @@ export class Render {
     this.animate = this.animate.bind(this);
     this.resize = this.resize.bind(this);
     window.addEventListener("resize", this.resize);
-    // this.animate = this.animate.bind(this);
+
+    this.water = new Water(this.scene, this.terrainSize, this.resolution);
+    this.time = Date.now();
     this.animate();
   }
 
@@ -49,6 +59,15 @@ export class Render {
 
   animate() {
     requestAnimationFrame(this.animate);
+
+    let now = Date.now();
+    let dt = now - this.time;
+
+    // console.log(dt);
+    // if (dt > 200) {
+    this.water.update(dt);
+    this.time = now;
+    // }
     this.renderer.render(this.scene, this.camera);
   }
 

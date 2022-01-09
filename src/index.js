@@ -13,6 +13,9 @@ import "../style.css";
       height: 4,
       octaves: 1,
     },
+    sun: {
+      position: { x: 20, y: 50, z: 0 },
+    },
   };
 
   new Render(initialParams);

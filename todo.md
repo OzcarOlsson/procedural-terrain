@@ -1,9 +1,16 @@
 # TODO
 
-- Fix directional light (sun) []
+- GUI for water []
+
+  - Flatshading checkbox[]
+  - Resolution []
+
+- axes helpers [x]
+- generate sun [x]
+- Fix directional light (sun) [x]
 - Check so normals is correct []
-- Fix window resize []
-- GUI controls []
-- Interpolate colors []
+- Fix window resize [x]
+- GUI controls [x]
+- Interpolate colors [x]
 - Make more realistic []
-- Ground plane (transparent?) []
+- Ground plane (transparent?) [x]
