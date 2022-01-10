@@ -3,7 +3,8 @@
 - GUI for water []
 
   - Flatshading checkbox[]
-  - Resolution []
+  - Resolution [] Maybe remove this option?
+  - Water speed
 
 - axes helpers [x]
 - generate sun [x]

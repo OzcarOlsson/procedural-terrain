@@ -5,19 +5,26 @@ import { Water } from "./Water.js";
 import { GUI } from "./GUI.js";
 import { World } from "./World.js";
 export class Render {
-  constructor(initialParams) {
+  constructor(initialParams, shaders) {
     this.scene = new THREE.Scene();
     this.camera = this.setupCamera();
 
     this.terrainSize = 100;
-    this.resolution = 50;
+    this.resolution = 25;
     this.world = new World(
+      this.scene,
+      this.terrainSize,
+      this.resolution,
+      initialParams,
+      shaders
+    );
+    this.water = new Water(
       this.scene,
       this.terrainSize,
       this.resolution,
       initialParams
     );
-    new GUI(initialParams, this.world);
+    new GUI(initialParams, this.world, this.water);
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(innerWidth, innerHeight);
     this.renderer.setPixelRatio(devicePixelRatio);
@@ -29,7 +36,6 @@ export class Render {
     this.resize = this.resize.bind(this);
     window.addEventListener("resize", this.resize);
 
-    this.water = new Water(this.scene, this.terrainSize, this.resolution);
     this.time = Date.now();
     this.animate();
   }

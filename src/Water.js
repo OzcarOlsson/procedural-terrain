@@ -4,10 +4,12 @@ import { VertexNormalsHelper } from "https://cdn.skypack.dev/three@0.136.0/examp
 
 import { loadTexture } from "./loaders.js";
 export class Water {
-  constructor(scene, terrainSize, resolution) {
+  constructor(scene, terrainSize, resolution, initialParams) {
     this.scene = scene;
     this.terrainSize = terrainSize;
-    this.resolution = 25;
+    // this.resolution = 25;
+    this.waterParams = initialParams.water;
+    this.resolution = this.waterParams.segments;
     this.waterPlane;
     this.waterTex = loadTexture("../textures/water3.png");
     this.waterMesh = this.createWaterPlane();
@@ -15,7 +17,8 @@ export class Water {
 
   createWaterPlane() {
     // Add groundZero plane
-
+    console.log("asd", this.waterParams.flatShading);
+    console.log("asda", this.resolution);
     this.waterPlane = new THREE.PlaneBufferGeometry(
       100,
       100,
@@ -31,7 +34,7 @@ export class Water {
       color: 0x347deb,
       // roughness: 0.5,
       opacity: 0.85,
-      flatShading: true,
+      flatShading: this.waterParams.flatShading,
       // transparent: true,
       // map: this.waterTex,
     });
@@ -76,6 +79,18 @@ export class Water {
     //   1
     // );
     // this.scene.add(vertexHelper);
+  }
+
+  changeWaterParams(waterParams) {
+    this.waterParams = waterParams;
+    this.waterMesh.material = new THREE.MeshPhongMaterial({
+      color: 0x347deb,
+      // roughness: 0.5,
+      opacity: 0.85,
+      flatShading: this.waterParams.flatShading,
+      // transparent: true,
+      // map: this.waterTex,
+    });
   }
 
   removeMesh() {

@@ -1,13 +1,17 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js"; // REF?
 import { Helpers } from "./Helpers.js";
-import { Water } from "./Water.js";
+
+import { VertexNormalsHelper } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/helpers/VertexNormalsHelper.js";
+
 import { loadTexture } from "./loaders.js";
+
 export class World {
-  constructor(scene, terrainSize, resolution, initialParams) {
+  constructor(scene, terrainSize, resolution, initialParams, shaders) {
     this.scene = scene;
     this.terrainSize = terrainSize;
     this.resolution = resolution;
+    this.shaders = shaders;
 
     this.snowTex = loadTexture("../textures/snow2.jpg");
     this.rockTex = loadTexture("../textures/rockTex.jpg");
@@ -22,7 +26,7 @@ export class World {
     this.quat = new THREE.Quaternion();
 
     this.sun = this.createSun();
-    // this.createPlane();
+    this.createSphere(); //temp
   }
 
   getPlaneMesh() {
@@ -47,15 +51,30 @@ export class World {
     ).rotateX(-Math.PI / 2);
     this.generateTerrain(planeGeometry, planeParams);
     planeGeometry.computeVertexNormals();
-    const material = new THREE.MeshStandardMaterial({
+    const material = new THREE.MeshPhongMaterial({
       color: "gray",
-      map: this.rockTex,
+      // map: this.rockTex,
+      // flatShading: true,
       // displacementMap: height,
       // wireframe: true,
     });
+    const customMaterial = new THREE.ShaderMaterial({
+      vertexShader: this.shaders.terrainVertexShader,
+      fragmentShader: this.shaders.terrainFragmentShader,
+    });
     const planeMesh = new THREE.Mesh(planeGeometry, material);
     this.scene.add(planeMesh);
+    planeMesh.recieveShadow = true;
+    planeGeometry.computeVertexNormals();
+
     this.planeMesh = planeMesh;
+    const vertexHelper = new VertexNormalsHelper(
+      this.planeMesh,
+      2,
+      0x00ff00,
+      1
+    );
+    // this.scene.add(vertexHelper);
     return planeMesh;
   }
   generateTerrain(planeGeometry, planeParams) {
@@ -70,26 +89,17 @@ export class World {
       // calc distance to center
       let dist = xz.distanceTo(origo);
 
-      // if (dist >= 8.5) {
-      //   array[i + 1] = this.generateNoise(x, z, planeParams, i);
-      // } else {
-      //   array[i + 1] = -5.0;
-      // }
-      const n = Math.random();
       if (x <= 2.0 && x >= -2.0) {
-        // array[i + 1] = -this.generateNoise(x, z, planeParams, i);
-        if (z <= 2.0 && z >= -2.0) {
-          array[i + 1] = 2.0;
-        } else {
-          array[i + 1] = -2.0;
-        }
+        array[i + 1] = -2.0;
       } else {
-        array[i + 1] = 2.0 + this.generateNoise(x, z, planeParams, i);
+        array[i + 1] = 2.0 + this.generateNoise(x, z, planeParams);
       }
+
+      // array[i + 1] = 2.0 + this.generateNoise(x, z, planeParams);
     }
   }
 
-  generateNoise(x, z, planeParams, i) {
+  generateNoise(x, z, planeParams) {
     // Paramaters
     // i < 10 && console.log("nois", planeParams.scale);
     const scale = planeParams.scale;
@@ -120,6 +130,7 @@ export class World {
     total /= normalization;
 
     return Math.pow(total, exponentation) * height;
+    // return simplex.noise2D(x, z);
   }
 
   setupLight() {
@@ -143,8 +154,8 @@ export class World {
 
   createSky() {
     const sky = new THREE.Mesh(
-      new THREE.SphereBufferGeometry(120, 120, 50),
-      new THREE.MeshBasicMaterial({ color: 0x87ceeb, side: THREE.BackSide })
+      new THREE.SphereBufferGeometry(200, 200, 50),
+      new THREE.MeshBasicMaterial({ color: 0x87ceeb, side: THREE.DoubleSide })
     );
     this.scene.fog = new THREE.FogExp2(0xffffff, 0.0007);
     this.scene.add(sky);
@@ -166,6 +177,22 @@ export class World {
       this.lightPosition.z
     );
     return sphereMesh;
+  }
+
+  createSphere() {
+    const sphereGeometry = new THREE.SphereGeometry(5, 32, 16);
+    // const sphereMaterial = new THREE.ShaderMaterial({
+    //   vertexShader: sunVertShader,
+    //   fragmentShader: sunFragShader,
+    // });
+    const sphereMaterial = new THREE.MeshStandardMaterial({
+      color: "red",
+      castShadow: true,
+    });
+
+    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    this.scene.add(sphereMesh);
+    sphereMesh.position.set(2, 15, 2);
   }
   updateSunPosition(lightPos) {
     const axis = new THREE.Vector3(1, 0, 0).normalize();

@@ -1,7 +1,8 @@
 export class GUI {
-  constructor(initialParams, World) {
+  constructor(initialParams, World, Water) {
     this.initialParams = initialParams;
     this.world = World;
+    this.water = Water;
     this.setupGUI();
   }
 
@@ -12,22 +13,22 @@ export class GUI {
     const terrainFolder = gui.addFolder("Terrain");
     terrainFolder
       .add(this.initialParams.plane, "scale", 1, 100)
-      .onChange(() => this.updateParams());
+      .onChange(() => this.updateTerrain());
     terrainFolder
       .add(this.initialParams.plane, "persistence", 0, 4)
-      .onChange(() => this.updateParams());
+      .onChange(() => this.updateTerrain());
     terrainFolder
       .add(this.initialParams.plane, "lacunarity", 0, 4)
-      .onChange(() => this.updateParams());
+      .onChange(() => this.updateTerrain());
     terrainFolder
       .add(this.initialParams.plane, "exponentation", 0, 5)
-      .onChange(() => this.updateParams());
+      .onChange(() => this.updateTerrain());
     terrainFolder
-      .add(this.initialParams.plane, "height", 1, 10)
-      .onChange(() => this.updateParams());
+      .add(this.initialParams.plane, "height", 1, 100)
+      .onChange(() => this.updateTerrain());
     terrainFolder
       .add(this.initialParams.plane, "octaves", 1, 20)
-      .onChange(() => this.updateParams());
+      .onChange(() => this.updateTerrain());
 
     //SUN
     const sunFolder = gui.addFolder("Sun");
@@ -41,38 +42,19 @@ export class GUI {
     // Water
     const waterFolder = gui.addFolder("Water");
     // flatshading and resolution
+    waterFolder
+      .add(this.initialParams.water, "flatShading", true, false)
+      .onChange(() => {
+        this.updateWater();
+      });
   }
 
-  updateParams() {
+  updateTerrain() {
     this.world.removeMesh(this.initialParams.plane);
     this.world.createPlane(this.initialParams.plane);
   }
+
+  updateWater() {
+    this.water.changeWaterParams(this.initialParams.water);
+  }
 }
-
-// const gui = new GUI();
-
-// 				const folderSky = gui.addFolder( 'Sky' );
-// 				folderSky.add( parameters, 'elevation', 0, 90, 0.1 ).onChange( updateSun );
-// 				folderSky.add( parameters, 'azimuth', - 180, 180, 0.1 ).onChange( updateSun );
-// 				folderSky.open();
-
-// 				const waterUniforms = water.material.uniforms;
-
-// 				const folderWater = gui.addFolder( 'Water' );
-// 				folderWater.add( waterUniforms.distortionScale, 'value', 0, 8, 0.1 ).name( 'distortionScale' );
-// 				folderWater.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'size' );
-// 				folderWater.open();
-
-// function render() {
-
-// 	const time = performance.now() * 0.001;
-
-// 	mesh.position.y = Math.sin( time ) * 20 + 5;
-// 	mesh.rotation.x = time * 0.5;
-// 	mesh.rotation.z = time * 0.51;
-
-// 	water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
-
-// 	renderer.render( scene, camera );
-
-// }
