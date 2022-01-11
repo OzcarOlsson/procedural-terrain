@@ -3,9 +3,9 @@
 - GUI for water []
 
   - Flatshading checkbox[x]
-  - remove fragments []
+  - remove fragments [x]
 
-- Fix better rock / snow texture []
-- Make choice between customShader and default Phong shader []
-- Fix sun positioning []
+- Fix better rock / snow texture [x]
+- Make choice between customShader and default Phong shader [x]
+- Fix sun positioning [x]
 - Switch noise [x]

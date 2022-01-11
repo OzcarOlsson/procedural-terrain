@@ -15,6 +15,9 @@ export class Water {
     this.waterMesh = this.createWaterPlane();
   }
 
+  moveWaterMesh(dist) {
+    this.waterMesh.translateOnAxis(new THREE.Vector3(0, 1, 0), dist);
+  }
   createWaterPlane() {
     // Add water plane
     this.waterPlane = new THREE.PlaneBufferGeometry(

@@ -70,31 +70,34 @@ export class World {
   }
 
   createMaterial(planeParams) {
-    const material = new THREE.MeshPhongMaterial({
-      color: planeParams.texture ? "" : "gray",
-      map: planeParams.texture ? this.rockTex : "",
-      // flatShading: true,
-      // wireframe: true,
-    });
-
-    const customMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        lightPosition: {
-          value: new THREE.Vector4(
-            this.lightPosition.x,
-            this.lightPosition.y,
-            this.lightPosition.z,
-            1.0
-          ),
+    let material;
+    if (planeParams.material === "THREE Phong") {
+      material = new THREE.MeshPhongMaterial({
+        color: planeParams.texture ? "" : "gray",
+        map: planeParams.texture ? this.rockTex : "",
+        // flatShading: true,
+        // wireframe: true,
+      });
+    } else {
+      material = new THREE.ShaderMaterial({
+        uniforms: {
+          lightPosition: {
+            value: new THREE.Vector4(
+              this.lightPosition.x,
+              this.lightPosition.y,
+              this.lightPosition.z,
+              1.0
+            ),
+          },
+          tex: { value: this.rockTex },
+          hasTexture: { value: planeParams.texture ? 1.0 : 0.0 },
         },
-        tex: { value: this.rockTex },
-        hasTexture: { value: 1.0 },
-      },
-      vertexShader: this.shaders.terrainVertexShader,
-      fragmentShader: this.shaders.terrainFragmentShader,
-    });
+        vertexShader: this.shaders.terrainVertexShader,
+        fragmentShader: this.shaders.terrainFragmentShader,
+      });
+    }
 
-    return customMaterial;
+    return material;
   }
   generateTerrain(planeGeometry, planeParams) {
     const { array } = planeGeometry.attributes.position;
@@ -158,7 +161,7 @@ export class World {
     //this.lightPosition = new THREE.Vector3(20.0, 30.0, -20.0);
 
     // let light = new THREE.DirectionalLight("#fab061", 1, 500);
-    let light = new THREE.DirectionalLight("#fff", 1, 500);
+    let light = new THREE.PointLight("#fff", 1, 500);
 
     light.position.set(
       this.lightPosition.x,
@@ -184,12 +187,9 @@ export class World {
   }
 
   createSun() {
-    const sphereGeometry = new THREE.SphereGeometry(2, 32, 16);
-    // const sphereMaterial = new THREE.ShaderMaterial({
-    //   vertexShader: sunVertShader,
-    //   fragmentShader: sunFragShader,
-    // });
-    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xf9d71c });
+    const sphereGeometry = new THREE.SphereGeometry(5, 32, 16);
+
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xf7eab7 });
 
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
     this.scene.add(sphereMesh);
@@ -201,13 +201,14 @@ export class World {
     return sphereMesh;
   }
 
-  updateSunPosition(lightPos) {
-    const axis = new THREE.Vector3(1, 0, 0).normalize();
-    const l = new THREE.Vector3(lightPos.x, lightPos.y, lightPos.z);
+  updateSunPosition(params) {
+    const l = params.sun.position;
+    // const axis = new THREE.Vector3(1, 0, 0).normalize();
+    // const l = new THREE.Vector3(lightPos.x, lightPos.y, lightPos.z);
 
-    this.angle += 0.01;
-    this.quat.setFromAxisAngle(axis, this.angle);
-    l.applyQuaternion(this.quat);
+    // this.angle += 0.01;
+    // this.quat.setFromAxisAngle(axis, this.angle);
+    // l.applyQuaternion(this.quat);
 
     this.sun.position.set(l.x, l.y, l.z);
     this.light.position.set(l.x, l.y, l.z);

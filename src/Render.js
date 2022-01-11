@@ -42,9 +42,9 @@ export class Render {
       0.1,
       1000
     );
-    camera.position.z = 20;
-    camera.position.y = 8;
-    camera.position.x = 8;
+    camera.position.z = -80;
+    camera.position.y = 30;
+    camera.position.x = 20;
 
     return camera;
   }

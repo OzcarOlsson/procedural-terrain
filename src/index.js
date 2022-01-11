@@ -38,6 +38,7 @@ function initProgram() {
       height: 80,
       octaves: 4,
       texture: true,
+      material: "custom shader",
     },
     sun: {
       position: { x: 20, y: 80, z: -140 },

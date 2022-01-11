@@ -14,8 +14,17 @@ export class GUI {
     // Terrain
     const terrainFolder = gui.addFolder("Terrain");
     terrainFolder
-      .add(this.initialParams.plane, "noise", ["simplex", "perlin"])
+      .add(this.initialParams.plane, "material", [
+        "custom shader",
+        "THREE Phong",
+      ])
       .onChange(() => this.updateTerrain());
+    terrainFolder
+      .add(this.initialParams.plane, "noise", ["perlin", "simplex"])
+      .onChange(() => {
+        this.updateTerrain("noise");
+      });
+
     terrainFolder
       .add(this.initialParams.plane, "scale", 1, 100)
       .onChange(() => this.updateTerrain());
@@ -37,17 +46,26 @@ export class GUI {
     terrainFolder
       .add(this.initialParams.plane, "texture", true, false)
       .onChange(() => {
-        this.updateTerrain("texture");
+        this.updateTerrain();
       });
 
     //SUN
     const sunFolder = gui.addFolder("Sun");
     sunFolder
-      .add(this.initialParams.sun.position, "z", -100, 100)
+      .add(this.initialParams.sun.position, "x", -200, 200)
       .onChange(() => {
-        this.world.updateSunPosition(this.initialParams.sun.position);
+        this.world.updateSunPosition(this.initialParams);
       });
-    // folder.add(this.initialParams.sun.position, "x", -100, 100). on
+    sunFolder
+      .add(this.initialParams.sun.position, "y", -200, 200)
+      .onChange(() => {
+        this.world.updateSunPosition(this.initialParams);
+      });
+    sunFolder
+      .add(this.initialParams.sun.position, "z", -200, 200)
+      .onChange(() => {
+        this.world.updateSunPosition(this.initialParams);
+      });
 
     // Water
     const waterFolder = gui.addFolder("Water");
@@ -59,17 +77,9 @@ export class GUI {
       });
   }
 
-  updateTerrain(type) {
-    if (type === "texture") {
-      let m = this.world.getPlaneMesh();
-      m.material = new THREE.MeshPhongMaterial({
-        color: this.initialParams.plane.texture ? "" : "gray",
-        map: this.initialParams.plane.texture ? this.world.getTex() : "",
-      });
-    } else {
-      this.world.removeMesh(this.initialParams.plane);
-      this.world.createPlane(this.initialParams.plane);
-    }
+  updateTerrain() {
+    this.world.removeMesh(this.initialParams.plane);
+    this.world.createPlane(this.initialParams.plane);
   }
 
   updateWater() {
