@@ -9,8 +9,8 @@ export class Render {
     this.scene = new THREE.Scene();
     this.camera = this.setupCamera();
 
-    this.terrainSize = 100;
-    this.resolution = 25;
+    this.terrainSize = 200;
+    this.resolution = 100;
     this.world = new World(
       this.scene,
       this.terrainSize,
@@ -18,12 +18,7 @@ export class Render {
       initialParams,
       shaders
     );
-    this.water = new Water(
-      this.scene,
-      this.terrainSize,
-      this.resolution,
-      initialParams
-    );
+    this.water = new Water(this.scene, initialParams);
     new GUI(initialParams, this.world, this.water);
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(innerWidth, innerHeight);

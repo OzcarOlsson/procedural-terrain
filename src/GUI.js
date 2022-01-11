@@ -1,3 +1,5 @@
+import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+
 export class GUI {
   constructor(initialParams, World, Water) {
     this.initialParams = initialParams;
@@ -11,6 +13,9 @@ export class GUI {
 
     // Terrain
     const terrainFolder = gui.addFolder("Terrain");
+    terrainFolder
+      .add(this.initialParams.plane, "noise", ["simplex", "perlin"])
+      .onChange(() => this.updateTerrain());
     terrainFolder
       .add(this.initialParams.plane, "scale", 1, 100)
       .onChange(() => this.updateTerrain());
@@ -29,6 +34,11 @@ export class GUI {
     terrainFolder
       .add(this.initialParams.plane, "octaves", 1, 20)
       .onChange(() => this.updateTerrain());
+    terrainFolder
+      .add(this.initialParams.plane, "texture", true, false)
+      .onChange(() => {
+        this.updateTerrain("texture");
+      });
 
     //SUN
     const sunFolder = gui.addFolder("Sun");
@@ -49,9 +59,17 @@ export class GUI {
       });
   }
 
-  updateTerrain() {
-    this.world.removeMesh(this.initialParams.plane);
-    this.world.createPlane(this.initialParams.plane);
+  updateTerrain(type) {
+    if (type === "texture") {
+      let m = this.world.getPlaneMesh();
+      m.material = new THREE.MeshPhongMaterial({
+        color: this.initialParams.plane.texture ? "" : "gray",
+        map: this.initialParams.plane.texture ? this.world.getTex() : "",
+      });
+    } else {
+      this.world.removeMesh(this.initialParams.plane);
+      this.world.createPlane(this.initialParams.plane);
+    }
   }
 
   updateWater() {

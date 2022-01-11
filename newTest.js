@@ -12,7 +12,7 @@ const scene = new THREE.Scene();
 
 // Texture loader
 const texLoader = new THREE.TextureLoader();
-const height = texLoader.load("hMap.jpg");
+const height = texLoader.load("./textures/hMap.jpg");
 const snowTex = texLoader.load("./textures/snowTex.jpg");
 
 const axesHelper = new THREE.AxesHelper(5);
@@ -34,7 +34,6 @@ renderer.setPixelRatio(devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-console.log(controls);
 controls.addEventListener("change", () => {
   renderer.render(scene, camera);
 });
@@ -67,7 +66,7 @@ for (let i = 0; i < array.length; i += 3) {
   // calc distance to center
   let dist = xz.distanceTo(origo);
 
-  array[i + 1] = generateNoise(x, z);
+  // array[i + 1] = generateNoise(x, z);
 }
 // planeGeometry.attributes.position.needsUpdate = true;
 // planeGeometry.translate(0, -1.5, 0);
@@ -75,7 +74,7 @@ planeGeometry.computeVertexNormals();
 const material = new THREE.MeshStandardMaterial({
   color: "gray",
   // map: snowTex,
-  // displacementMap: height,
+  displacementMap: height,
   // wireframe: true,
 });
 

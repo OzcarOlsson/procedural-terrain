@@ -29,20 +29,21 @@ function loaded() {
 function initProgram() {
   const initialParams = {
     plane: {
+      noise: "perlin",
       width: 10,
-      scale: 4,
+      scale: 50,
       persistence: 0.5,
       lacunarity: 2,
       exponentation: 3.7,
-      height: 8,
-      octaves: 1,
+      height: 80,
+      octaves: 4,
+      texture: true,
     },
     sun: {
-      position: { x: 20, y: 50, z: -140 },
+      position: { x: 20, y: 80, z: -140 },
     },
     water: {
-      flatShading: true,
-      segments: 25,
+      flatShading: false,
     },
   };
 

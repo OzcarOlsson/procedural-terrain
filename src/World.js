@@ -1,5 +1,8 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+
+// Simplex noise
 import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js"; // REF?
+import perlin from "https://cdn.jsdelivr.net/gh/mikechambers/es6-perlin-module@master/perlin.js";
 import { Helpers } from "./Helpers.js";
 
 import { VertexNormalsHelper } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/helpers/VertexNormalsHelper.js";
@@ -13,11 +16,13 @@ export class World {
     this.resolution = resolution;
     this.shaders = shaders;
 
-    this.snowTex = loadTexture("../textures/snow2.jpg");
-    this.rockTex = loadTexture("../textures/rockTex.jpg");
+    this.snowTex = loadTexture("../textures/snow4.jpg");
+    this.rockTex = loadTexture("../textures/rock2.jpg");
     this.dirtTex = loadTexture("../textures/mountWater.jpg");
-    this.planeMesh = this.createPlane(initialParams.plane);
+    this.heightMap = loadTexture("../textures/hMap.jpg");
+    console.log(this.heightMap);
     this.lightPosition = initialParams.sun.position;
+    this.planeMesh = this.createPlane(initialParams.plane);
     this.light = this.setupLight();
     new Helpers(this.scene, this.light);
     this.createSky();
@@ -26,11 +31,13 @@ export class World {
     this.quat = new THREE.Quaternion();
 
     this.sun = this.createSun();
-    this.createSphere(); //temp
   }
 
   getPlaneMesh() {
     return this.planeMesh;
+  }
+  getTex() {
+    return this.rockTex;
   }
 
   removeMesh() {
@@ -51,31 +58,43 @@ export class World {
     ).rotateX(-Math.PI / 2);
     this.generateTerrain(planeGeometry, planeParams);
     planeGeometry.computeVertexNormals();
+
+    const material = this.createMaterial(planeParams);
+
+    const planeMesh = new THREE.Mesh(planeGeometry, material);
+    this.scene.add(planeMesh);
+    const vertexHelper = new VertexNormalsHelper(planeMesh, 2, 0x00ff00, 1);
+    // this.scene.add(vertexHelper);
+    this.planeMesh = planeMesh;
+    return planeMesh;
+  }
+
+  createMaterial(planeParams) {
     const material = new THREE.MeshPhongMaterial({
-      color: "gray",
-      // map: this.rockTex,
+      color: planeParams.texture ? "" : "gray",
+      map: planeParams.texture ? this.rockTex : "",
       // flatShading: true,
-      // displacementMap: height,
       // wireframe: true,
     });
+
     const customMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        lightPosition: {
+          value: new THREE.Vector4(
+            this.lightPosition.x,
+            this.lightPosition.y,
+            this.lightPosition.z,
+            1.0
+          ),
+        },
+        tex: { value: this.rockTex },
+        hasTexture: { value: 1.0 },
+      },
       vertexShader: this.shaders.terrainVertexShader,
       fragmentShader: this.shaders.terrainFragmentShader,
     });
-    const planeMesh = new THREE.Mesh(planeGeometry, material);
-    this.scene.add(planeMesh);
-    planeMesh.recieveShadow = true;
-    planeGeometry.computeVertexNormals();
 
-    this.planeMesh = planeMesh;
-    const vertexHelper = new VertexNormalsHelper(
-      this.planeMesh,
-      2,
-      0x00ff00,
-      1
-    );
-    // this.scene.add(vertexHelper);
-    return planeMesh;
+    return customMaterial;
   }
   generateTerrain(planeGeometry, planeParams) {
     const { array } = planeGeometry.attributes.position;
@@ -101,7 +120,7 @@ export class World {
 
   generateNoise(x, z, planeParams) {
     // Paramaters
-    // i < 10 && console.log("nois", planeParams.scale);
+
     const scale = planeParams.scale;
     const persistence = planeParams.persistence;
     const octaves = planeParams.octaves;
@@ -111,7 +130,7 @@ export class World {
 
     const simplex = new SimplexNoise();
 
-    // actual noise
+    // FBM
     const xs = x / scale;
     const zs = z / scale;
     const G = 2.0 ** -persistence;
@@ -121,7 +140,9 @@ export class World {
     let total = 0;
     for (let i = 0; i < octaves; i++) {
       const noiseValue =
-        simplex.noise2D(xs * frequency, zs * frequency) * 0.5 + 0.5;
+        planeParams.noise === "simplex"
+          ? simplex.noise2D(xs * frequency, zs * frequency) * 0.5 + 0.5
+          : perlin(xs * frequency, zs * frequency);
       total += noiseValue * amplitude;
       normalization += amplitude;
       amplitude *= G;
@@ -130,14 +151,15 @@ export class World {
     total /= normalization;
 
     return Math.pow(total, exponentation) * height;
-    // return simplex.noise2D(x, z);
   }
 
   setupLight() {
     // let lightPosition = new THREE.Vector3(2.0, 5.0, 5.0);
     //this.lightPosition = new THREE.Vector3(20.0, 30.0, -20.0);
 
+    // let light = new THREE.DirectionalLight("#fab061", 1, 500);
     let light = new THREE.DirectionalLight("#fff", 1, 500);
+
     light.position.set(
       this.lightPosition.x,
       this.lightPosition.y,
@@ -145,7 +167,7 @@ export class World {
     );
 
     // light.castShadow = true;
-    // const ambientLight = new THREE.AmbientLight("#fff", 1.0);
+    // const ambientLight = new THREE.AmbientLight("#fab061", 0.5);
     // this.scene.add(ambientLight);
     this.scene.add(light);
 
@@ -179,21 +201,6 @@ export class World {
     return sphereMesh;
   }
 
-  createSphere() {
-    const sphereGeometry = new THREE.SphereGeometry(5, 32, 16);
-    // const sphereMaterial = new THREE.ShaderMaterial({
-    //   vertexShader: sunVertShader,
-    //   fragmentShader: sunFragShader,
-    // });
-    const sphereMaterial = new THREE.MeshStandardMaterial({
-      color: "red",
-      castShadow: true,
-    });
-
-    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    this.scene.add(sphereMesh);
-    sphereMesh.position.set(2, 15, 2);
-  }
   updateSunPosition(lightPos) {
     const axis = new THREE.Vector3(1, 0, 0).normalize();
     const l = new THREE.Vector3(lightPos.x, lightPos.y, lightPos.z);
