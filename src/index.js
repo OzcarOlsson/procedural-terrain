@@ -10,7 +10,6 @@ let terrainVertexShader, terrainFragmentShader;
   fileLoader.load("../shaders/terrainVert.glsl", (data) => {
     terrainVertexShader = data;
     loaded();
-    // console.log(d);
   });
 
   fileLoader.load("../shaders/terrainFrag.glsl", (data) => {
@@ -27,6 +26,7 @@ function loaded() {
 }
 
 function initProgram() {
+  // Set initial parameters, can be changed in the GUI in runtime
   const initialParams = {
     plane: {
       noise: "perlin",
@@ -45,6 +45,10 @@ function initProgram() {
     },
     water: {
       flatShading: false,
+    },
+    helpers: {
+      axesHelper: false,
+      vertexNormals: false,
     },
   };
 

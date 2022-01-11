@@ -1,14 +1,8 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 
-// Simplex noise
-import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js"; // REF?
+import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js"; // Simplex noise
 import perlin from "https://cdn.jsdelivr.net/gh/mikechambers/es6-perlin-module@master/perlin.js";
 import { Helpers } from "./Helpers.js";
-
-import { VertexNormalsHelper } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/helpers/VertexNormalsHelper.js";
-
-import { loadTexture } from "./loaders.js";
-
 export class World {
   constructor(scene, terrainSize, resolution, initialParams, shaders) {
     this.scene = scene;
@@ -16,19 +10,13 @@ export class World {
     this.resolution = resolution;
     this.shaders = shaders;
 
-    this.snowTex = loadTexture("../textures/snow4.jpg");
-    this.rockTex = loadTexture("../textures/rock2.jpg");
-    this.dirtTex = loadTexture("../textures/mountWater.jpg");
-    this.heightMap = loadTexture("../textures/hMap.jpg");
-    console.log(this.heightMap);
+    this.rockTex = this.loadTexture("../textures/rock2.jpg");
+
     this.lightPosition = initialParams.sun.position;
     this.planeMesh = this.createPlane(initialParams.plane);
     this.light = this.setupLight();
-    new Helpers(this.scene, this.light);
+    this.helpers = new Helpers(this.scene, this.light, this.planeMesh);
     this.createSky();
-
-    this.angle = 0;
-    this.quat = new THREE.Quaternion();
 
     this.sun = this.createSun();
   }
@@ -38,6 +26,9 @@ export class World {
   }
   getTex() {
     return this.rockTex;
+  }
+  getHelpers() {
+    return this.helpers;
   }
 
   removeMesh() {
@@ -63,8 +54,7 @@ export class World {
 
     const planeMesh = new THREE.Mesh(planeGeometry, material);
     this.scene.add(planeMesh);
-    const vertexHelper = new VertexNormalsHelper(planeMesh, 2, 0x00ff00, 1);
-    // this.scene.add(vertexHelper);
+
     this.planeMesh = planeMesh;
     return planeMesh;
   }
@@ -75,8 +65,6 @@ export class World {
       material = new THREE.MeshPhongMaterial({
         color: planeParams.texture ? "" : "gray",
         map: planeParams.texture ? this.rockTex : "",
-        // flatShading: true,
-        // wireframe: true,
       });
     } else {
       material = new THREE.ShaderMaterial({
@@ -116,8 +104,6 @@ export class World {
       } else {
         array[i + 1] = 2.0 + this.generateNoise(x, z, planeParams);
       }
-
-      // array[i + 1] = 2.0 + this.generateNoise(x, z, planeParams);
     }
   }
 
@@ -157,23 +143,13 @@ export class World {
   }
 
   setupLight() {
-    // let lightPosition = new THREE.Vector3(2.0, 5.0, 5.0);
-    //this.lightPosition = new THREE.Vector3(20.0, 30.0, -20.0);
-
-    // let light = new THREE.DirectionalLight("#fab061", 1, 500);
     let light = new THREE.PointLight("#fff", 1, 500);
-
     light.position.set(
       this.lightPosition.x,
       this.lightPosition.y,
       this.lightPosition.z
     );
-
-    // light.castShadow = true;
-    // const ambientLight = new THREE.AmbientLight("#fab061", 0.5);
-    // this.scene.add(ambientLight);
     this.scene.add(light);
-
     return light;
   }
 
@@ -188,9 +164,7 @@ export class World {
 
   createSun() {
     const sphereGeometry = new THREE.SphereGeometry(5, 32, 16);
-
     const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xf7eab7 });
-
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
     this.scene.add(sphereMesh);
     sphereMesh.position.set(
@@ -202,17 +176,14 @@ export class World {
   }
 
   updateSunPosition(params) {
-    const l = params.sun.position;
-    // const axis = new THREE.Vector3(1, 0, 0).normalize();
-    // const l = new THREE.Vector3(lightPos.x, lightPos.y, lightPos.z);
+    const lightPosition = params.sun.position;
+    this.sun.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+    this.light.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+  }
 
-    // this.angle += 0.01;
-    // this.quat.setFromAxisAngle(axis, this.angle);
-    // l.applyQuaternion(this.quat);
-
-    this.sun.position.set(l.x, l.y, l.z);
-    this.light.position.set(l.x, l.y, l.z);
-
-    // this.light.position.set(lightPos.x, lightPos.y, lightPos.z);
+  loadTexture(texURL) {
+    const texLoader = new THREE.TextureLoader();
+    const texture = texLoader.load(texURL);
+    return texture;
   }
 }

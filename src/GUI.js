@@ -1,5 +1,3 @@
-import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
-
 export class GUI {
   constructor(initialParams, World, Water) {
     this.initialParams = initialParams;
@@ -74,6 +72,21 @@ export class GUI {
       .add(this.initialParams.water, "flatShading", true, false)
       .onChange(() => {
         this.updateWater();
+      });
+
+    // Helpers
+    const helpersFolder = gui.addFolder("Helpers");
+    helpersFolder
+      .add(this.initialParams.helpers, "axesHelper", true, false)
+      .onChange(() => {
+        const helpers = this.world.getHelpers();
+        helpers.axesHelper(this.initialParams.helpers.axesHelper);
+      });
+    helpersFolder
+      .add(this.initialParams.helpers, "vertexNormals", true, false)
+      .onChange(() => {
+        const helpers = this.world.getHelpers();
+        helpers.vertexNormalsHelper(this.initialParams.helpers.vertexNormals);
       });
   }
 

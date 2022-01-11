@@ -1,11 +1,11 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+import { VertexNormalsHelper } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/helpers/VertexNormalsHelper.js";
 
 export class Helpers {
-  constructor(scene, light) {
+  constructor(scene, light, planeMesh) {
     this.light = light;
     this.scene = scene;
-
-    this.lightHelpers();
+    this.planeMesh = planeMesh;
     this.axesHelper();
   }
 
@@ -14,8 +14,29 @@ export class Helpers {
     this.scene.add(lightHelper);
   }
 
-  axesHelper() {
-    const axesHelper = new THREE.AxesHelper(20);
-    this.scene.add(axesHelper);
+  axesHelper(show) {
+    const axesHelper = new THREE.AxesHelper(200);
+    axesHelper.name = "axesHelper";
+    if (show) {
+      this.scene.add(axesHelper);
+    } else {
+      this.scene.remove(this.scene.getObjectByName("axesHelper"));
+    }
+  }
+
+  vertexNormalsHelper(show) {
+    console.log(show);
+    const vertexHelper = new VertexNormalsHelper(
+      this.planeMesh,
+      2,
+      0x00ff00,
+      1
+    );
+    vertexHelper.name = "vertexHelper";
+    if (show) {
+      this.scene.add(vertexHelper);
+    } else {
+      this.scene.remove(this.scene.getObjectByName("vertexHelper"));
+    }
   }
 }

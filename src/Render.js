@@ -51,7 +51,6 @@ export class Render {
 
   setupControls() {
     const controls = new OrbitControls(this.camera, this.renderer.domElement);
-
     controls.addEventListener("change", () => {
       this.renderer.render(this.scene, this.camera);
     });
@@ -60,15 +59,7 @@ export class Render {
 
   animate() {
     requestAnimationFrame(this.animate);
-
-    let now = Date.now();
-    let dt = now - this.time;
-
-    // console.log(dt);
-    // if (dt > 200) {
-    this.water.update(dt);
-    this.time = now;
-    // }
+    this.water.update();
     this.renderer.render(this.scene, this.camera);
   }
 
