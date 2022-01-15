@@ -17,11 +17,6 @@ export class GUI {
         "THREE Phong",
       ])
       .onChange(() => this.updateTerrain());
-    terrainFolder
-      .add(this.initialParams.plane, "noise", ["perlin", "simplex"])
-      .onChange(() => {
-        this.updateTerrain("noise");
-      });
 
     terrainFolder
       .add(this.initialParams.plane, "scale", 1, 100)

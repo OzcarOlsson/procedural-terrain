@@ -29,7 +29,6 @@ function initProgram() {
   // Set initial parameters, can be changed in the GUI in runtime
   const initialParams = {
     plane: {
-      noise: "perlin",
       width: 10,
       scale: 50,
       persistence: 0.5,

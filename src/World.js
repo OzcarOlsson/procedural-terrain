@@ -1,6 +1,5 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 
-import "https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js"; // Simplex noise
 import perlin from "https://cdn.jsdelivr.net/gh/mikechambers/es6-perlin-module@master/perlin.js";
 import { Helpers } from "./Helpers.js";
 export class World {
@@ -94,10 +93,10 @@ export class World {
       const y = array[i + 1];
       const z = array[i + 2];
 
-      const xz = new THREE.Vector2(x, z);
-      const origo = new THREE.Vector2(0, 0);
-      // calc distance to center
-      let dist = xz.distanceTo(origo);
+      // const xz = new THREE.Vector2(x, z);
+      // const origo = new THREE.Vector2(0, 0);
+      // // calc distance to center
+      // let dist = xz.distanceTo(origo);
 
       if (x <= 2.0 && x >= -2.0) {
         array[i + 1] = -2.0;
@@ -117,24 +116,20 @@ export class World {
     const exponentation = planeParams.exponentation;
     const height = planeParams.height;
 
-    const simplex = new SimplexNoise();
-
     // FBM
     const xs = x / scale;
+
     const zs = z / scale;
-    const G = 2.0 ** -persistence;
+    const gain = 2.0 ** -persistence;
     let amplitude = 1.0;
     let frequency = 1.0;
     let normalization = 0;
     let total = 0;
     for (let i = 0; i < octaves; i++) {
-      const noiseValue =
-        planeParams.noise === "simplex"
-          ? simplex.noise2D(xs * frequency, zs * frequency) * 0.5 + 0.5
-          : perlin(xs * frequency, zs * frequency);
+      const noiseValue = perlin(xs * frequency, zs * frequency);
       total += noiseValue * amplitude;
       normalization += amplitude;
-      amplitude *= G;
+      amplitude *= gain;
       frequency *= lacunarity;
     }
     total /= normalization;
