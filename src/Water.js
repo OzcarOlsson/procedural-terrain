@@ -45,10 +45,7 @@ export class Water {
       const xsin = Math.sin(x + now);
       const zcos = Math.cos(z + now);
 
-      array[i + 1] =
-        this.initialParams.plane.noise !== "simplex"
-          ? 2.0 + xsin * zcos
-          : xsin * zcos;
+      array[i + 1] = 2.0 + xsin * zcos;
     }
     this.waterPlane.computeVertexNormals(); // calculate new normals
     this.waterPlane.attributes.position.needsUpdate = true;
